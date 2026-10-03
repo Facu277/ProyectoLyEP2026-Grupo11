@@ -1,0 +1,60 @@
+/* src/detallecliente.css */
+.detalle-cliente {
+    background: var(--color-white);
+    max-width: 850px;
+    margin: 40px auto;
+    padding: 40px;
+    border-radius: 22px;
+    box-shadow: var(--shadow-lg);
+}
+
+.detalle-cliente h1 {
+    text-align: center;
+    margin-bottom: 35px;
+    color: var(--color-primary);
+}
+
+.detalle-cliente h2 {
+    margin-top: 30px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--color-border-hr);
+    color: var(--color-primary-hover);
+}
+
+.detalle-cliente p {
+    margin: 12px 0;
+    color: var(--color-text-muted);
+}
+
+.detalle-cliente strong {
+    color: var(--color-primary);
+}
+
+.btn-eliminar {
+    margin-top: 25px;
+    background: var(--color-danger-btn);
+    color: var(--color-white);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    width: 100%;
+    font-weight: 600;
+    transition: var(--transition-normal);
+}
+
+.btn-eliminar:hover {
+    background: var(--color-danger-hover);
+    transform: scale(1.02);
+}
+
+.mensaje-eliminado {
+    background: var(--color-success-bg);
+    color: var(--color-success-text);
+    border: 1px solid var(--color-success-border);
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 25px;
+}
