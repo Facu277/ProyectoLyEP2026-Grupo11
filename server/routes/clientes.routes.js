@@ -1,43 +1,24 @@
 const express = require("express");
 const { validarDatosCliente } = require("../middleware/validateCliente");
+const {
+  getClientes,
+  getClienteById,
+  createCliente,
+  updateCliente,
+  patchCliente,
+  deleteCliente
+} = require("../controllers/clientes.controller");
 
 const router = express.Router();
 
-// Rutas preparadas para la implementación del miércoles.
-router.get("/", (req, res) => {
-  res.status(501).json({
-    mensaje: "Listado de clientes pendiente de implementación"
-  });
-});
+// Rutas de lectura
+router.get("/", getClientes);
+router.get("/:id", getClienteById);
 
-router.get("/:id", (req, res) => {
-  res.status(501).json({
-    mensaje: "Consulta de cliente pendiente de implementación"
-  });
-});
-
-router.post("/", validarDatosCliente, (req, res) => {
-  res.status(501).json({
-    mensaje: "Creación de cliente pendiente de implementación"
-  });
-});
-
-router.put("/:id", validarDatosCliente, (req, res) => {
-  res.status(501).json({
-    mensaje: "Actualización de cliente pendiente de implementación"
-  });
-});
-
-router.patch("/:id", validarDatosCliente, (req, res) => {
-  res.status(501).json({
-    mensaje: "Actualización parcial de cliente pendiente de implementación"
-  });
-});
-
-router.delete("/:id", (req, res) => {
-  res.status(501).json({
-    mensaje: "Eliminación de cliente pendiente de implementación"
-  });
-});
+// Rutas de escritura con middleware de validación
+router.post("/", validarDatosCliente, createCliente);
+router.put("/:id", validarDatosCliente, updateCliente);
+router.patch("/:id", validarDatosCliente, patchCliente);
+router.delete("/:id", deleteCliente);
 
 module.exports = router;

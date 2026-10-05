@@ -38,7 +38,7 @@ async function createCliente(req, res, next) {
   }
 }
 
-// PUT /api/clientes/:id - Actualizar cliente
+// PUT /api/clientes/:id - Actualización total
 async function updateCliente(req, res, next) {
   try {
     const { id } = req.params;
@@ -46,6 +46,19 @@ async function updateCliente(req, res, next) {
     res.status(200).json({
       mensaje: "Cliente actualizado correctamente",
       data: clienteDoc
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// PATCH /api/clientes/:id - Actualización parcial
+async function patchCliente(req, res, next) {
+  try {
+    const { id } = req.params;
+    res.status(200).json({
+      mensaje: "Cliente actualizado parcialmente con éxito",
+      data: { id, ...req.body }
     });
   } catch (error) {
     next(error);
@@ -69,5 +82,6 @@ module.exports = {
   getClienteById,
   createCliente,
   updateCliente,
+  patchCliente,
   deleteCliente
 };
