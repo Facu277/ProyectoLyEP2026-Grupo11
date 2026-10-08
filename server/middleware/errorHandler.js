@@ -1,9 +1,21 @@
-function errorHandler(err, req, res, next) {
-  console.error("Error:", err.message);
+function errorHandler(
+  error,
+  req,
+  res,
+  next
+) {
+  console.error(error);
 
-  res.status(err.status || 500).json({
-    error: err.message || "Error interno del servidor"
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  res.status(500).json({
+    error:
+      "Error interno del servidor."
   });
 }
 
-module.exports = { errorHandler };
+module.exports = {
+  errorHandler
+};
