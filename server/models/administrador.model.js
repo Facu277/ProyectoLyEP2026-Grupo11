@@ -1,13 +1,19 @@
 const { getDB } = require("../config/db");
+const bcrypt = require("bcryptjs");
 
 const COLLECTION_NAME = "administradores";
 
+/**
+ * Obtiene la colección de administradores.
+ */
 function getAdministradoresCollection() {
   return getDB().collection(COLLECTION_NAME);
 }
 
 /**
- * Busca administrador por email.
+ * Busca un administrador por email.
+ *
+ * El email se normaliza a minúsculas.
  */
 async function findAdministradorByEmail(email) {
   return await getAdministradoresCollection().findOne({
@@ -16,7 +22,7 @@ async function findAdministradorByEmail(email) {
 }
 
 /**
- * Busca administrador por ID.
+ * Busca un administrador por ID.
  */
 async function findAdministradorById(id) {
   return await getAdministradoresCollection().findOne({
@@ -25,9 +31,11 @@ async function findAdministradorById(id) {
 }
 
 /**
- * Convierte administrador para enviar al frontend.
+ * Convierte un administrador a un objeto seguro
+ * para enviar al frontend.
  *
- * Nunca devuelve password.
+ * IMPORTANTE:
+ * La contraseña nunca se devuelve.
  */
 function administradorToResponse(admin) {
   if (!admin) {
@@ -36,7 +44,9 @@ function administradorToResponse(admin) {
 
   return {
     id: admin.id,
+
     email: admin.email,
+
     username: admin.username,
 
     name: {
@@ -54,43 +64,68 @@ function administradorToResponse(admin) {
   };
 }
 
-module.exports = {
-  getAdministradoresCollection,
-  findAdministradorByEmail,
-  findAdministradorById,
-  administradorToResponse
-};
 
-
-const bcrypt = require("bcryptjs");
-
+/**
+ * Inicializa los administradores del sistema.
+ *
+ * Si la colección ya contiene administradores,
+ * no vuelve a crearlos.
+ *
+ * Las contraseñas se almacenan mediante bcrypt.
+ */
 async function inicializarAdministradores() {
   const collection =
     getAdministradoresCollection();
 
+  /**
+   * Verificamos si ya existen administradores.
+   */
   const cantidad =
     await collection.countDocuments();
 
   if (cantidad > 0) {
+    console.log(
+      "Los administradores ya existen en MongoDB"
+    );
+
     return;
   }
 
+  /**
+   * ==========================================
+   * HASH DE CONTRASEÑAS
+   * ==========================================
+   *
+   * bcrypt utiliza un salt y genera un hash
+   * irreversible.
+   *
+   * Las contraseñas originales NO se almacenan
+   * en MongoDB.
+   */
   const passwordGerente =
     await bcrypt.hash(
-      "Gerente#123",
+      "gerente123",
       12
     );
 
   const passwordSoporte =
     await bcrypt.hash(
-      "Soporte#123",
+      "soporte123",
       12
     );
 
+
+  /**
+   * ==========================================
+   * ADMINISTRADORES INICIALES
+   * ==========================================
+   */
   const administradores = [
     {
       id: 1,
+
       email: "gerente1@empresa.com",
+
       username: "gerente1",
 
       password: passwordGerente,
@@ -111,7 +146,9 @@ async function inicializarAdministradores() {
 
     {
       id: 2,
+
       email: "gerente2@empresa.com",
+
       username: "gerente2",
 
       password: passwordGerente,
@@ -132,7 +169,9 @@ async function inicializarAdministradores() {
 
     {
       id: 3,
+
       email: "soporte1@empresa.com",
+
       username: "soporte1",
 
       password: passwordSoporte,
@@ -153,7 +192,9 @@ async function inicializarAdministradores() {
 
     {
       id: 4,
+
       email: "soporte2@empresa.com",
+
       username: "soporte2",
 
       password: passwordSoporte,
@@ -174,7 +215,9 @@ async function inicializarAdministradores() {
 
     {
       id: 5,
+
       email: "soporte3@empresa.com",
+
       username: "soporte3",
 
       password: passwordSoporte,
@@ -194,11 +237,36 @@ async function inicializarAdministradores() {
     }
   ];
 
+
+  /**
+   * ==========================================
+   * CREAR ADMINISTRADORES
+   * ==========================================
+   */
   await collection.insertMany(
     administradores
   );
 
+
   console.log(
-    "Administradores iniciales creados"
+    "Administradores iniciales creados correctamente"
   );
 }
+
+
+/**
+ * ==========================================
+ * EXPORTACIONES
+ * ==========================================
+ */
+module.exports = {
+  getAdministradoresCollection,
+
+  findAdministradorByEmail,
+
+  findAdministradorById,
+
+  administradorToResponse,
+
+  inicializarAdministradores
+};
