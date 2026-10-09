@@ -1,0 +1,14 @@
+/* src/footer.css */
+footer {
+    margin-top: 50px;
+    background: var(--color-primary);
+    color: var(--color-white);
+    text-align: center;
+    padding: 30px;
+    box-shadow: var(--shadow-footer);
+}
+
+footer p {
+    margin: 6px;
+    opacity: .95;
+}
