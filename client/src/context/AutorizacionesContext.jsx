@@ -4,173 +4,121 @@ import {
     useState
 } from "react";
 
-import leerJSONLocalStorage
-    from "../utils/leerJSONLocalStorage.js";
-import {
-    administradores
-} from "../services/administradoresInicializados.js";
-
 export const AutorizacionesContext =
     createContext(null);
 
+const AutorizacionesProvider = ({ children }) => {
+    
+const [admin, setAdmin] = useState(() => {
+    try {
+        const sesionGuardada = localStorage.getItem("admin");
 
-const AutorizacionesProvider = ({
-    children
-}) => {
-
-    // ==========================================
-    // ADMINISTRADOR EN SESIÓN
-    // ==========================================
-
-    const [admin, setAdmin] = useState(() => {
-
-        const sesionGuardada = leerJSONLocalStorage(
-            "admin",
-            null
-        );
-
-        if (!sesionGuardada || !sesionGuardada.id) {
-
+        if (!sesionGuardada) {
             return null;
         }
 
-        const adminEncontrado = administradores.find(
-            adm => adm.id === Number(sesionGuardada.id)
-        );
+        const sesion = JSON.parse(sesionGuardada);
+        const administrador = sesion?.administrador;
 
-        // Si no existe o está inactivo → sesión null y se limpia la clave.
-        if (!adminEncontrado || !adminEncontrado.is_active) {
-
+        if (
+            !sesion?.token ||
+            !administrador?.id ||
+            !["GERENTE", "SOPORTE"].includes(administrador.sector) ||
+            administrador.is_active !== true
+        ) {
             localStorage.removeItem("admin");
             return null;
         }
 
-        return adminEncontrado.toJSON();
+        return administrador;
+    } catch {
+        localStorage.removeItem("admin");
+        return null;
+    }
+});
+
+
+    const [token, setToken] = useState(() => {
+        try {
+            const sesionGuardada =
+                localStorage.getItem("admin");
+
+            if (!sesionGuardada) {
+                return null;
+            }
+
+            const sesion = JSON.parse(sesionGuardada);
+
+            return sesion.token || null;
+        } catch {
+            return null;
+        }
     });
 
-
-    // ==========================================
-    // PERSISTIR SESIÓN
-    // ==========================================
-
     useEffect(() => {
-
-        if (admin && admin.id) {
-
+        if (admin && token) {
             localStorage.setItem(
                 "admin",
                 JSON.stringify({
-                    id: admin.id
+                    administrador: admin,
+                    token
                 })
             );
-
         } else {
-
-            localStorage.removeItem(
-                "admin"
-            );
+            localStorage.removeItem("admin");
         }
+    }, [admin, token]);
 
-    }, [admin]);
+    // Recibe la respuesta exitosa del login.
+    const iniciarSesion = (respuesta) => {
+        const nuevoToken = respuesta?.token;
+        const nuevoAdmin = respuesta?.administrador;
 
-
-    // ==========================================
-    // INICIAR SESIÓN
-    // ==========================================
-
-    /*
-        El Context solo acepta iniciar sesión con un id válido.
-        El administrador se busca en la lista canónica, garantizando
-        que el sector y los permisos no provengan de la UI.
-    */
-    const iniciarSesion = (id) => {
-
-        const adminId =
-            typeof id === "object" ? id?.id : id;
-
-        const adminEncontrado =
-            administradores.find(
-                adm => adm.id === Number(adminId)
-            );
-
-        if (!adminEncontrado || !adminEncontrado.is_active) {
-
-            setAdmin(null);
+        if (
+            !nuevoToken ||
+            !nuevoAdmin ||
+            !nuevoAdmin.id ||
+            !["GERENTE", "SOPORTE"].includes(
+                nuevoAdmin.sector
+            ) ||
+            nuevoAdmin.is_active !== true
+        ) {
             return false;
         }
 
-        setAdmin(
-            adminEncontrado.toJSON()
-        );
+        setToken(nuevoToken);
+        setAdmin(nuevoAdmin);
 
         return true;
     };
 
-
-    // ==========================================
-    // CERRAR SESIÓN
-    // ==========================================
-
     const cerrarSesion = () => {
-
         setAdmin(null);
+        setToken(null);
+        localStorage.removeItem("admin");
     };
 
+    const rol = admin?.sector ?? null;
+    const esGerencia = rol === "GERENTE";
+    const esSoporte = rol === "SOPORTE";
 
-    // ==========================================
-    // ROL / SECTOR (DERIVADOS DE SESIÓN RESUELTA)
-    // ==========================================
-
-    /*
-        El rol y los permisos se derivan exclusivamente del administrador
-        reconstruido desde la lista canónica, nunca del storage.
-    */
-    const rol =
-        admin?.sector ?? null;
-
-
-    // Deben coincidir exactamente con
-    // SECTORES = ["GERENTE", "SOPORTE"].
-    const esGerencia =
-        rol === "GERENTE";
-
-    const esSoporte =
-        rol === "SOPORTE";
-
-
-    // ==========================================
-    // VERIFICAR PERMISOS
-    // ==========================================
-
-    const tieneRol = (
-        rolesPermitidos = []
-    ) => {
-
+    const tieneRol = (rolesPermitidos = []) => {
         if (!admin || !admin.sector) {
-
             return false;
         }
 
-
-        if (
-            rolesPermitidos.length === 0
-        ) {
-
+        if (rolesPermitidos.length === 0) {
             return true;
         }
 
-
-        return rolesPermitidos.includes(
-            admin.sector
-        );
+        return rolesPermitidos.includes(admin.sector);
     };
 
-
     return (
-
         <AutorizacionesContext.Provider
             value={{
                 admin,
+                token,
                 iniciarSesion,
                 setAdmin: iniciarSesion,
                 cerrarSesion,
@@ -180,12 +128,9 @@ const AutorizacionesProvider = ({
                 tieneRol
             }}
         >
-
             {children}
-
         </AutorizacionesContext.Provider>
     );
 };
-
 
 export default AutorizacionesProvider;

@@ -19,111 +19,86 @@ const {
   deleteCliente
 } = require("../controllers/clientes.controller");
 
-
-const router =
-  express.Router();
-
-
-/**
- * Todas las operaciones de clientes
- * requieren administrador autenticado.
- */
-router.use(
-  verificarToken
-);
-
+const router = express.Router();
 
 /**
  * GET /api/clientes
  *
  * GERENTE y SOPORTE.
+ * Requiere autenticación.
  */
 router.get(
   "/",
-  permitirSectores(
-    "GERENTE",
-    "SOPORTE"
-  ),
+  verificarToken,
+  permitirSectores("GERENTE", "SOPORTE"),
   getClientes
 );
-
 
 /**
  * GET /api/clientes/:id
  *
  * GERENTE y SOPORTE.
+ * Requiere autenticación.
  */
 router.get(
   "/:id",
-  permitirSectores(
-    "GERENTE",
-    "SOPORTE"
-  ),
+  verificarToken,
+  permitirSectores("GERENTE", "SOPORTE"),
   getClienteById
 );
-
 
 /**
  * POST /api/clientes
  *
- * GERENTE y SOPORTE.
+ * REGISTRO PÚBLICO.
+ * No requiere token ni sesión de administrador.
+ * Los datos siguen siendo validados por el backend.
  */
 router.post(
   "/",
-  permitirSectores(
-    "GERENTE",
-    "SOPORTE"
-  ),
   validarDatosCliente,
   createCliente
 );
-
 
 /**
  * PUT /api/clientes/:id
  *
  * GERENTE y SOPORTE.
+ * Requiere autenticación.
  */
 router.put(
   "/:id",
-  permitirSectores(
-    "GERENTE",
-    "SOPORTE"
-  ),
+  verificarToken,
+  permitirSectores("GERENTE", "SOPORTE"),
   validarDatosClienteUpdate,
   updateCliente
 );
-
 
 /**
  * PATCH /api/clientes/:id
  *
  * GERENTE y SOPORTE.
+ * Requiere autenticación.
  */
 router.patch(
   "/:id",
-  permitirSectores(
-    "GERENTE",
-    "SOPORTE"
-  ),
+  verificarToken,
+  permitirSectores("GERENTE", "SOPORTE"),
   patchCliente
 );
-
 
 /**
  * DELETE /api/clientes/:id
  *
- * SOLO GERENTE.
- *
- * Es una baja lógica.
+ * Solo GERENTE.
+ * Requiere autenticación.
+ * Realiza una baja lógica.
  */
 router.delete(
   "/:id",
-  permitirSectores(
-    "GERENTE"
-  ),
+  verificarToken,
+  permitirSectores("GERENTE"),
   deleteCliente
 );
-
 
 module.exports = router;

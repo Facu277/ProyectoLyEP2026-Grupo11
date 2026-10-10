@@ -253,6 +253,36 @@ async function inicializarAdministradores() {
   );
 }
 
+/**
+ * Cuenta administradores activos por sector.
+ */
+async function contarAdministradoresActivosPorSector() {
+    const collection = getAdministradoresCollection();
+
+    const [gerentes, soportes, administradores] = await Promise.all([
+        collection.countDocuments({
+            sector: "GERENTE",
+            is_active: true
+        }),
+
+        collection.countDocuments({
+            sector: "SOPORTE",
+            is_active: true
+        }),
+
+        collection.countDocuments({
+            sector: { $in: ["GERENTE", "SOPORTE"] },
+            is_active: true
+        })
+    ]);
+
+    return {
+        administradores,
+        gerentes,
+        soportes
+    };
+}
+
 
 /**
  * ==========================================
@@ -260,13 +290,10 @@ async function inicializarAdministradores() {
  * ==========================================
  */
 module.exports = {
-  getAdministradoresCollection,
-
-  findAdministradorByEmail,
-
-  findAdministradorById,
-
-  administradorToResponse,
-
-  inicializarAdministradores
+    getAdministradoresCollection,
+    findAdministradorByEmail,
+    findAdministradorById,
+    administradorToResponse,
+    inicializarAdministradores,
+    contarAdministradoresActivosPorSector
 };

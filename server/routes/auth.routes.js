@@ -1,15 +1,24 @@
 const express = require("express");
 
 const {
-  login
+    login,
+    obtenerEstadisticas
 } = require("../controllers/auth.controller");
 
-const router =
-  express.Router();
+const {
+    verificarToken,
+    permitirSectores
+} = require("../middleware/auth");
 
-router.post(
-  "/login",
-  login
+const router = express.Router();
+
+router.post("/login", login);
+
+router.get(
+    "/estadisticas",
+    verificarToken,
+    permitirSectores("GERENTE", "SOPORTE"),
+    obtenerEstadisticas
 );
 
 module.exports = router;

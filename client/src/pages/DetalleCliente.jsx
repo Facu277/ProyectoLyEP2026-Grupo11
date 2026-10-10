@@ -222,8 +222,7 @@ const DetalleCliente = () => {
                     is_active: false
                 */
 
-                await clienteService
-                    .eliminarCliente(id, admin?.id);
+                await clienteService.eliminarCliente(id);
 
 
                 setMensaje(
@@ -453,18 +452,14 @@ const DetalleCliente = () => {
 
 
                 <p>
-
                     <strong>
                         Calle:
                     </strong>
-
                     {" "}
-
                     {
                         cliente.address?.street
                         || "Sin datos"
                     }
-
                 </p>
 
 
@@ -473,14 +468,11 @@ const DetalleCliente = () => {
                     <strong>
                         Número:
                     </strong>
-
                     {" "}
-
                     {
                         cliente.address?.number
                         || "Sin datos"
                     }
-
                 </p>
 
 
@@ -489,14 +481,11 @@ const DetalleCliente = () => {
                     <strong>
                         Código Postal:
                     </strong>
-
                     {" "}
-
                     {
                         cliente.address?.zipcode
                         || "Sin datos"
                     }
-
                 </p>
 
 
@@ -505,14 +494,11 @@ const DetalleCliente = () => {
                     <strong>
                         Ciudad:
                     </strong>
-
                     {" "}
-
                     {
                         cliente.address?.city
                         || "Sin datos"
                     }
-
                 </p>
 
 
@@ -524,15 +510,11 @@ const DetalleCliente = () => {
                     Datos de cuenta
                 </h2>
 
-
                 <p>
-
                     <strong>
                         Usuario:
                     </strong>
-
                     {" "}
-
                     {cliente.username}
 
                 </p>
@@ -552,7 +534,6 @@ const DetalleCliente = () => {
 
                 <div className="acciones-cliente">
 
-
                     {/* ==============================
                         EDITAR
                         GERENTE + SOPORTE
@@ -560,9 +541,7 @@ const DetalleCliente = () => {
 
                     <button
                         type="button"
-
                         className="btn-editar"
-
                         onClick={() =>
                             navigate(
                                 `/clientes/editar/${cliente.id}`
@@ -576,15 +555,11 @@ const DetalleCliente = () => {
                     {/* ==============================
                         ELIMINAR
                         SOLO GERENTE
-                    ============================== */}
-
+                    ============================= */}
                     {esGerencia && (
-
                         <button
                             type="button"
-
                             className="btn-eliminar"
-
                             onClick={
                                 eliminarCliente
                             }
@@ -593,14 +568,11 @@ const DetalleCliente = () => {
                         </button>
                     )}
 
-
                     {/* ==============================
                         VOLVER
                     ============================== */}
-
                     <button
                         type="button"
-
                         onClick={() =>
                             navigate(
                                 "/clientes"
@@ -609,11 +581,8 @@ const DetalleCliente = () => {
                     >
                         Volver
                     </button>
-
                 </div>
-
             </div>
-
         </>
     );
 };

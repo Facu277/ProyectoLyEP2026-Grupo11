@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-    LIMITES_CLIENTE,
-    validarCliente,
-    passwordRules
-} from "../../shared/validaciones.js";
+import { passwordRules } from "../../shared/validaciones.js";
+
 
 // ==========================================
 // DATOS INICIALES DEL FORMULARIO
@@ -42,6 +39,7 @@ const FormularioCliente = ({
 
     const [formulario, setFormulario] = useState(formularioInicial);
     const [errores, setErrores] = useState({});
+    const [mensajeError, setMensajeError] = useState("");
     const [mostrarPassword, setMostrarPassword] = useState(false);
 
     // Si recibimos un cliente estamos editando.
@@ -52,6 +50,7 @@ const FormularioCliente = ({
     // ======================================
 
     useEffect(() => {
+
         if (!cliente) {
             setFormulario(formularioInicial);
             setErrores({});
@@ -59,8 +58,12 @@ const FormularioCliente = ({
             return;
         }
 
+
+
         /*
+
             IMPORTANTE:
+
             Durante la edición cargamos los datos
             del cliente pero NO su contraseña.
 
@@ -69,6 +72,7 @@ const FormularioCliente = ({
             - No se muestra.
             - No se modifica.
         */
+
         setFormulario({
             email: cliente.email ?? "",
             username: cliente.username ?? "",
@@ -88,8 +92,9 @@ const FormularioCliente = ({
 
         setErrores({});
         setMostrarPassword(false);
-
     }, [cliente]);
+
+
 
     // ======================================
     // CAMBIAR CAMPOS SIMPLES
@@ -105,6 +110,8 @@ const FormularioCliente = ({
 
         // Quitamos el error mientras
         // el usuario corrige el campo.
+
+        setMensajeError("");
         setErrores(prev => ({
             ...prev,
             [name]: undefined
@@ -126,6 +133,7 @@ const FormularioCliente = ({
             }
         }));
 
+        setMensajeError("");
         setErrores(prev => ({
             ...prev,
             [name]: undefined
@@ -135,7 +143,6 @@ const FormularioCliente = ({
     // ======================================
     // CAMBIAR DIRECCIÓN
     // ======================================
-
     const handleAddressChange = (event) => {
         const { name, value } = event.target;
 
@@ -147,6 +154,7 @@ const FormularioCliente = ({
             }
         }));
 
+        setMensajeError("");
         setErrores(prev => ({
             ...prev,
             [name]: undefined
@@ -158,9 +166,10 @@ const FormularioCliente = ({
     // ======================================
 
     const handleSubmit = async (event) => {
+
         event.preventDefault();
 
-        // Preparamos los datos.
+        // Preparamos los datos
         const datosCliente = {
             ...formulario,
             address: {
@@ -182,61 +191,40 @@ const FormularioCliente = ({
         }
 
         // ==================================
-        // VALIDAR CLIENTE
-        // ==================================
-
-        /*
-            CREAR:
-            validarPassword = true
-
-            EDITAR:
-            validarPassword = false
-        */
-        const resultadoValidacion = validarCliente(
-            datosCliente,
-            {
-                validarPassword: !esEdicion
-            }
-        );
-
-        // Si hay errores, mostramos los mensajes
-        // provenientes de validaciones.js.
-        if (!resultadoValidacion.valid) {
-            setErrores(resultadoValidacion.errors);
-            return;
-        }
 
         setErrores({});
-
-        // ==================================
-        // ENVIAR AL PAGE / SERVICE
-        // ==================================
+        setMensajeError("");
 
         try {
+            // ClienteFormPage / servicio realiza la petición al backend.
             await onSubmit(datosCliente);
-
         } catch (error) {
-            /*
-                clientesService también valida.
+            // Los errores de validación deben venir del backend.
+            const respuesta = error?.response?.data;
+            const erroresBackend =
+                error?.validationErrors ??
+                respuesta?.errors ??
+                respuesta?.errores ??
+                respuesta?.data?.errors;
 
-                Si devuelve errores de validación,
-                los mostramos debajo de cada campo.
-            */
-            if (error.validationErrors) {
-                setErrores(error.validationErrors);
-                return;
+            if (erroresBackend && typeof erroresBackend === "object") {
+                setErrores(erroresBackend);
             }
 
-            console.error(
-                "Error al guardar cliente:",
-                error
+            setMensajeError(
+                respuesta?.mensaje ??
+                respuesta?.message ??
+                error?.message ??
+                "No se pudo guardar el cliente. Intentá nuevamente."
             );
+
+            console.error("Error al guardar cliente:", error);
         }
     };
 
-    // ======================================
     // REGLAS DE PASSWORD
     // ======================================
+
 
     const reglasPassword = passwordRules(
         formulario.password
@@ -247,12 +235,19 @@ const FormularioCliente = ({
     // ======================================
 
     return (
+
         <form onSubmit={handleSubmit} noValidate>
+
+            {mensajeError && (
+                <p className="mensaje-error" role="alert">
+                    ⚠ {mensajeError}
+                </p>
+            )}
+
 
             {/* ==================================
                 DATOS PERSONALES
             ================================== */}
-
             <h2>Datos personales</h2>
 
             {/* NOMBRE */}
@@ -267,8 +262,6 @@ const FormularioCliente = ({
                     type="text"
                     value={formulario.name.firstname}
                     onChange={handleNameChange}
-                    minLength={LIMITES_CLIENTE.firstname.min}
-                    maxLength={LIMITES_CLIENTE.firstname.max}
                     required
                 />
 
@@ -291,8 +284,6 @@ const FormularioCliente = ({
                     type="text"
                     value={formulario.name.lastname}
                     onChange={handleNameChange}
-                    minLength={LIMITES_CLIENTE.lastname.min}
-                    maxLength={LIMITES_CLIENTE.lastname.max}
                     required
                 />
 
@@ -315,8 +306,6 @@ const FormularioCliente = ({
                     type="tel"
                     value={formulario.phone}
                     onChange={handleChange}
-                    minLength={LIMITES_CLIENTE.phone.min}
-                    maxLength={LIMITES_CLIENTE.phone.max}
                     required
                 />
 
@@ -349,8 +338,6 @@ const FormularioCliente = ({
                     type="text"
                     value={formulario.username}
                     onChange={handleChange}
-                    minLength={LIMITES_CLIENTE.username.min}
-                    maxLength={LIMITES_CLIENTE.username.max}
                     required
                 />
 
@@ -373,10 +360,8 @@ const FormularioCliente = ({
                     type="email"
                     value={formulario.email}
                     onChange={handleChange}
-                    maxLength={LIMITES_CLIENTE.email.max}
                     required
                 />
-
                 {errores.email && (
                     <p className="mensaje-error">
                         ⚠ {errores.email}
@@ -406,8 +391,6 @@ const FormularioCliente = ({
                             }
                             value={formulario.password}
                             onChange={handleChange}
-                            minLength={LIMITES_CLIENTE.password.min}
-                            maxLength={LIMITES_CLIENTE.password.max}
                             required
                         />
 
@@ -456,6 +439,8 @@ const FormularioCliente = ({
                                 {" "}Una letra minúscula
                             </li>
 
+
+
                             <li>
                                 {reglasPassword.digit ? "✓" : "✗"}
                                 {" "}Un número
@@ -493,8 +478,6 @@ const FormularioCliente = ({
                     type="text"
                     value={formulario.address.city}
                     onChange={handleAddressChange}
-                    minLength={LIMITES_CLIENTE.city.min}
-                    maxLength={LIMITES_CLIENTE.city.max}
                     required
                 />
 
@@ -517,8 +500,6 @@ const FormularioCliente = ({
                     type="text"
                     value={formulario.address.street}
                     onChange={handleAddressChange}
-                    minLength={LIMITES_CLIENTE.street.min}
-                    maxLength={LIMITES_CLIENTE.street.max}
                     required
                 />
 
@@ -541,14 +522,14 @@ const FormularioCliente = ({
                     type="number"
                     value={formulario.address.number}
                     onChange={handleAddressChange}
-                    min={LIMITES_CLIENTE.number.min}
-                    max={LIMITES_CLIENTE.number.max}
                     required
                 />
 
                 {errores.number && (
                     <p className="mensaje-error">
+
                         ⚠ {errores.number}
+
                     </p>
                 )}
             </div>
@@ -565,11 +546,8 @@ const FormularioCliente = ({
                     type="text"
                     value={formulario.address.zipcode}
                     onChange={handleAddressChange}
-                    minLength={LIMITES_CLIENTE.zipcode.min}
-                    maxLength={LIMITES_CLIENTE.zipcode.max}
                     required
                 />
-
                 {errores.zipcode && (
                     <p className="mensaje-error">
                         ⚠ {errores.zipcode}
@@ -580,22 +558,10 @@ const FormularioCliente = ({
             {/* ==================================
                 BOTÓN GUARDAR
             ================================== */}
-
-            <button
-                type="submit"
-                disabled={cargando}
-            >
-                {
-                    cargando
-                        ? "Guardando..."
-                        : esEdicion
-                            ? "Guardar cambios"
-                            : "Crear cliente"
-                }
+            <button type="submit" disabled={cargando}>
+                { cargando ? "Guardando..." : esEdicion ? "Guardar cambios" : "Crear cliente" }
             </button>
-
         </form>
     );
 };
-
 export default FormularioCliente;

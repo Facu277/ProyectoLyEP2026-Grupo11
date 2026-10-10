@@ -2,8 +2,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const {
-  findAdministradorByEmail,
-  administradorToResponse
+    findAdministradorByEmail,
+    administradorToResponse,
+    contarAdministradoresActivosPorSector
 } = require("../models/administrador.model");
 
 
@@ -88,6 +89,24 @@ async function login(req, res, next) {
 }
 
 
+
+async function obtenerEstadisticas(req, res, next) {
+    try {
+        const estadisticas =
+            await contarAdministradoresActivosPorSector();
+
+        return res.status(200).json({
+            mensaje: "Estadísticas obtenidas correctamente",
+            data: estadisticas
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+
 module.exports = {
-  login
+  login,
+  obtenerEstadisticas
 };
