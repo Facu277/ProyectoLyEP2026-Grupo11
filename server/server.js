@@ -1,14 +1,16 @@
 const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
+const cors = require("cors"); 
+const { connectDB } = require("./config/db");
+const clientesRouter = require("./routes/clientes.routes");
+const { errorHandler } = require("./middleware/errorHandler");
 
 const {
   connectDB
 } = require("./config/db");
 
-const {
-  inicializarAdministradores
-} = require("./models/administrador.model");
+// CORS 
+app.use(cors()); 
+app.use(express.json());
 
 const clientesRouter =
   require("./routes/clientes.routes");
@@ -113,6 +115,5 @@ async function iniciarServidor() {
     process.exit(1);
   }
 }
-
 
 iniciarServidor();

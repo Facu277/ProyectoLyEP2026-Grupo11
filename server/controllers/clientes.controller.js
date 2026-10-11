@@ -1,373 +1,163 @@
-const bcrypt = require("bcryptjs");
+const { connectDB } = require("../config/db");
+const { clienteToDocument } = require("../models/cliente.model");
+const bcrypt = require("bcrypt");
 
-const {
-  clienteToDocument,
-  clienteToResponse,
-  findAllClientes,
-  findClienteById,
-  findClienteByIdAdmin,
-  getNextClienteId,
-  insertCliente,
-  replaceCliente,
-  deactivateCliente
-} = require("../models/cliente.model");
+const SALT_ROUNDS = 10;
 
-
-/**
- * GET /api/clientes
- */
+// GET /api/clientes -> Listar solo los clientes activos (is_active: true)
 async function getClientes(req, res, next) {
   try {
-    const clientes = await findAllClientes();
+    const db = await connectDB();
+    const clientes = await db.collection("clientes").find({ is_active: true }).toArray();
 
     res.status(200).json({
-      mensaje: "Lista de clientes obtenida correctamente",
-      data: clientes.map(clienteToResponse)
+      mensaje: "Lista de clientes obtenida correctamente desde MongoDB Atlas",
+      data: clientes
     });
   } catch (error) {
     next(error);
   }
 }
 
-
-/**
- * GET /api/clientes/:id
- */
+// GET /api/clientes/:id -> Obtener cliente específico activo
 async function getClienteById(req, res, next) {
   try {
     const { id } = req.params;
-
-    const cliente = await findClienteById(id);
+    const db = await connectDB();
+    
+    const cliente = await db.collection("clientes").findOne({ id: Number(id), is_active: true });
 
     if (!cliente) {
-      return res.status(404).json({
-        error: `No existe un cliente activo con ID ${id}`
-      });
+      return res.status(404).json({ error: `No se encontró el cliente activo con ID ${id}` });
     }
 
     res.status(200).json({
       mensaje: "Cliente obtenido correctamente",
-      data: clienteToResponse(cliente)
+      data: cliente
     });
   } catch (error) {
     next(error);
   }
 }
 
-
-/**
- * POST /api/clientes
- */
+// POST /api/clientes -> Crear cliente con contraseña encriptada
 async function createCliente(req, res, next) {
   try {
-    const datos = req.body;
+    const db = await connectDB();
+    const nuevoCliente = req.body;
 
-    /**
-     * Verificar email existente.
-     */
-    const clientesExistentes =
-      await require("../models/cliente.model")
-        .getClientesCollection()
-        .find({
-          $or: [
-            {
-              email: datos.email.toLowerCase()
-            },
-            {
-              username: datos.username.toLowerCase()
-            }
-          ]
-        })
-        .toArray();
+    // 1. Validar la estructura requerida del modelo de Flor
+    clienteToDocument(nuevoCliente);
 
-    if (clientesExistentes.length > 0) {
-      return res.status(409).json({
-        error:
-          "Ya existe un cliente con ese email o username."
-      });
+    // 2. Encriptar contraseña del Cliente
+    if (nuevoCliente.password) {
+      nuevoCliente.password = await bcrypt.hash(nuevoCliente.password, SALT_ROUNDS);
+    } else {
+      return res.status(400).json({ error: "La contraseña es obligatoria" });
     }
 
-    /**
-     * Generar ID.
-     */
-    const id = await getNextClienteId();
+    // 3. Generar ID incremental dinámico consultando la DB
+    const ultimo = await db.collection("clientes").find().sort({ id: -1 }).limit(1).toArray();
+    nuevoCliente.id = ultimo.length > 0 ? ultimo[0].id + 1 : 1;
+    nuevoCliente.is_active = true;
 
-    /**
-     * Hash de contraseña.
-     *
-     * 12 rondas de salt.
-     */
-    const passwordHash =
-      await bcrypt.hash(datos.password, 12);
+    // 4. Guardar en MongoDB Atlas
+    await db.collection("clientes").insertOne(nuevoCliente);
 
-    /**
-     * Normalizar datos.
-     */
-    const cliente = clienteToDocument({
-      ...datos,
-
-      id,
-
-      email: datos.email.trim().toLowerCase(),
-
-      username:
-        datos.username.trim().toLowerCase(),
-
-      phone:
-        String(datos.phone)
-          .replace(/[-\s]/g, ""),
-
-      password: passwordHash,
-
-      is_active: true,
-
-      tipo: "CLIENTE"
-    });
-
-    const nuevoCliente =
-      await insertCliente(cliente);
+    // Ocultar password en la respuesta por seguridad corporativa
+    const { password, ...respuestaSegura } = nuevoCliente;
 
     res.status(201).json({
-      mensaje: "Cliente creado exitosamente",
-      data: clienteToResponse(nuevoCliente)
+      mensaje: "Cliente creado exitosamente en MongoDB Atlas",
+      data: respuestaSegura
     });
   } catch (error) {
     next(error);
   }
 }
 
-
-/**
- * PUT /api/clientes/:id
- */
+// PUT /api/clientes/:id -> Actualización total y mantenimiento de password
 async function updateCliente(req, res, next) {
   try {
     const { id } = req.params;
+    const db = await connectDB();
+    const datosActualizados = req.body;
+    const idCliente = Number(id);
 
-    const clienteExistente =
-      await findClienteByIdAdmin(id);
-
+    const clienteExistente = await db.collection("clientes").findOne({ id: idCliente });
     if (!clienteExistente) {
-      return res.status(404).json({
-        error: `No existe un cliente con ID ${id}`
-      });
+      return res.status(404).json({ error: "Cliente no encontrado" });
     }
 
-    /**
-     * No permitimos cambiar:
-     * - id
-     * - password
-     * - is_active
-     * - tipo
-     */
-    const datosActualizados = {
-      ...clienteExistente,
-
-      ...req.body,
-
-      id: clienteExistente.id,
-
-      password: clienteExistente.password,
-
-      is_active: clienteExistente.is_active,
-
-      tipo: "CLIENTE",
-
-      name: {
-        ...clienteExistente.name,
-        ...(req.body.name || {})
-      },
-
-      address: {
-        ...clienteExistente.address,
-        ...(req.body.address || {})
-      }
-    };
-
-    /**
-     * Normalización.
-     */
-    datosActualizados.email =
-      datosActualizados.email
-        .trim()
-        .toLowerCase();
-
-    datosActualizados.username =
-      datosActualizados.username
-        .trim()
-        .toLowerCase();
-
-    datosActualizados.phone =
-      String(datosActualizados.phone)
-        .replace(/[-\s]/g, "");
-
-    /**
-     * Verificar email / username duplicado.
-     */
-    const duplicado =
-      await require("../models/cliente.model")
-        .getClientesCollection()
-        .findOne({
-          $or: [
-            {
-              email:
-                datosActualizados.email
-            },
-            {
-              username:
-                datosActualizados.username
-            }
-          ],
-          id: {
-            $ne: Number(id)
-          }
-        });
-
-    if (duplicado) {
-      return res.status(409).json({
-        error:
-          "El email o username ya pertenece a otro cliente."
-      });
+    // Si modifican la contraseña se encripta, si no, se mantiene la actual
+    if (datosActualizados.password && datosActualizados.password.trim() !== "") {
+      datosActualizados.password = await bcrypt.hash(datosActualizados.password, SALT_ROUNDS);
+    } else {
+      datosActualizados.password = clienteExistente.password;
     }
 
-    const clienteActualizado =
-      await replaceCliente(
-        id,
-        datosActualizados
-      );
+    datosActualizados.id = idCliente;
+    datosActualizados.is_active = clienteExistente.is_active;
+
+    const documentoValidado = clienteToDocument(datosActualizados);
+    await db.collection("clientes").replaceOne({ id: idCliente }, documentoValidado);
 
     res.status(200).json({
-      mensaje:
-        "Cliente actualizado correctamente",
-
-      data:
-        clienteToResponse(
-          clienteActualizado
-        )
+      mensaje: "Cliente actualizado correctamente",
+      data: documentoValidado
     });
   } catch (error) {
     next(error);
   }
 }
 
-
-/**
- * PATCH /api/clientes/:id
- */
+// PATCH /api/clientes/:id -> Actualización parcial
 async function patchCliente(req, res, next) {
   try {
     const { id } = req.params;
+    const db = await connectDB();
+    const cambios = req.body;
+    const idCliente = Number(id);
 
-    const clienteExistente =
-      await findClienteByIdAdmin(id);
-
-    if (!clienteExistente) {
-      return res.status(404).json({
-        error: `No existe un cliente con ID ${id}`
-      });
+    if (cambios.password) {
+      cambios.password = await bcrypt.hash(cambios.password, SALT_ROUNDS);
     }
 
-    /**
-     * No permitimos modificaciones parciales
-     * sobre estos campos.
-     */
-    const cambios = {
-      ...req.body
-    };
+    const resultado = await db.collection("clientes").updateOne(
+      { id: idCliente },
+      { $set: cambios }
+    );
 
-    delete cambios.id;
-    delete cambios.password;
-    delete cambios.is_active;
-    delete cambios.tipo;
-
-    if (cambios.email) {
-      cambios.email =
-        cambios.email
-          .trim()
-          .toLowerCase();
+    if (resultado.matchedCount === 0) {
+      return res.status(404).json({ error: "Cliente no encontrado" });
     }
-
-    if (cambios.username) {
-      cambios.username =
-        cambios.username
-          .trim()
-          .toLowerCase();
-    }
-
-    if (cambios.phone) {
-      cambios.phone =
-        String(cambios.phone)
-          .replace(/[-\s]/g, "");
-    }
-
-    const clienteActualizado =
-      await require("../models/cliente.model")
-        .getClientesCollection()
-        .findOneAndUpdate(
-          {
-            id: Number(id)
-          },
-          {
-            $set: {
-              ...cambios,
-              updatedAt: new Date()
-            }
-          },
-          {
-            returnDocument: "after"
-          }
-        );
 
     res.status(200).json({
-      mensaje:
-        "Cliente actualizado parcialmente con éxito",
-
-      data:
-        clienteToResponse(
-          clienteActualizado
-        )
+      mensaje: "Cliente actualizado parcialmente con éxito",
+      data: { id: idCliente, ...cambios }
     });
   } catch (error) {
     next(error);
   }
 }
 
-
-/**
- * DELETE /api/clientes/:id
- *
- * Baja lógica.
- */
+// DELETE /api/clientes/:id -> Baja lógica (Modifica is_active a false)
 async function deleteCliente(req, res, next) {
   try {
     const { id } = req.params;
+    const db = await connectDB();
 
-    const cliente =
-      await findClienteByIdAdmin(id);
+    const resultado = await db.collection("clientes").updateOne(
+      { id: Number(id) },
+      { $set: { is_active: false } }
+    );
 
-    if (!cliente) {
-      return res.status(404).json({
-        error: `No existe un cliente con ID ${id}`
-      });
+    if (resultado.matchedCount === 0) {
+      return res.status(404).json({ error: "Cliente no encontrado" });
     }
-
-    if (!cliente.is_active) {
-      return res.status(400).json({
-        error: "El cliente ya se encuentra deshabilitado."
-      });
-    }
-
-    const clienteDeshabilitado =
-      await deactivateCliente(id);
 
     res.status(200).json({
-      mensaje:
-        `Cliente con ID ${id} deshabilitado correctamente`,
-
-      data:
-        clienteToResponse(
-          clienteDeshabilitado
-        )
+      mensaje: `Baja lógica aplicada: Cliente con ID ${id} deshabilitado correctamente`
     });
   } catch (error) {
     next(error);
