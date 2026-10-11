@@ -8,19 +8,20 @@ const {
   connectDB
 } = require("./config/db");
 
-// CORS 
-app.use(cors()); 
+app.use(cors({ origin: "http://localhost:5173" }));
+
 app.use(express.json());
 
-const clientesRouter =
-  require("./routes/clientes.routes");
+app.use("/api/clientes", clientesRouter);
 
-const authRouter =
-  require("./routes/auth.routes");
+app.get("/", (req, res) => {
+  res.json({
+    mensaje: "Servidor ProyectoLyEP2026 funcionando",
+  });
+});
 
-const {
-  errorHandler
-} = require("./middleware/errorHandler");
+
+app.use(errorHandler);
 
 
 dotenv.config();
