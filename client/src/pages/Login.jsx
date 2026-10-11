@@ -32,6 +32,8 @@ const Login = () => {
     const [errores, setErrores] =
         useState({});
 
+    const [cargando, setCargando] = useState(false);
+
 
     // ======================================
     // CONTEXTO DE AUTORIZACIONES
@@ -56,8 +58,7 @@ const Login = () => {
 
         const nuevosErrores = {};
 
-        const emailRegex =
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
         // ==================================
@@ -134,116 +135,56 @@ const Login = () => {
     // INICIAR SESIÓN
     // ======================================
 
-    const manejarSubmit = (event) => {
+    
+const manejarSubmit = async (event) => {
+    event.preventDefault();
 
-        event.preventDefault();
+    if (!validar()) {
+        return;
+    }
 
+    setCargando(true);
+    setErrores({});
 
-        // ==================================
-        // VALIDAR DATOS
-        // ==================================
+    try {
+        // El backend verifica las credenciales y devuelve el JWT.
+        const respuesta = await AutorizacionesService.login(
+            email.trim(),
+            password
+        );
 
-        // Si el formulario tiene errores,
-        // detenemos el proceso.
-        if (!validar()) {
+        // El contexto guarda el token y los datos del administrador.
+        const sesionCreada = iniciarSesion(respuesta);
 
-            return;
-        }
-
-
-        // ==================================
-        // AUTENTICAR ADMINISTRADOR
-        // ==================================
-
-        /*
-            IMPORTANTE:
-
-            El usuario ya NO selecciona
-            manualmente su sector.
-
-            AutorizacionesService busca al
-            administrador mediante:
-
-            - email
-            - password
-
-            Una vez encontrado, el sector
-            proviene directamente de los datos
-            del administrador:
-
-            GERENTE
-            SOPORTE
-        */
-
-        const usuario =
-            AutorizacionesService.login(
-                email.trim(),
-                password
-            );
-
-
-        // ==================================
-        // CREDENCIALES INCORRECTAS
-        // ==================================
-
-        if (!usuario) {
-
+        if (!sesionCreada) {
             setErrores({
-                login:
-                    "Email o contraseña incorrectos."
+                login: "No se pudo establecer la sesión del administrador."
             });
-
             return;
         }
 
+        navigate("/", { replace: true });
+    } catch (error) {
+        const status = error.response?.status;
 
-        // ==================================
-        // ADMINISTRADOR DESHABILITADO
-        // ==================================
+        let mensaje = "No se pudo iniciar sesión. Intentá nuevamente.";
 
-        /*
-            Si en algún momento un administrador
-            tiene is_active = false, no puede
-            iniciar sesión.
-        */
-
-        if (!usuario.is_active) {
-
-            setErrores({
-                login:
-                    "Este usuario se encuentra deshabilitado."
-            });
-
-            return;
+        if (status === 400 || status === 401) {
+            mensaje = "Email o contraseña incorrectos.";
+        } else if (status === 403) {
+            mensaje = "Este administrador se encuentra deshabilitado.";
+        } else if (!error.response) {
+            mensaje = "No se pudo conectar con el servidor.";
+        } else if (error.response?.data?.error) {
+            mensaje = error.response.data.error;
         }
 
+        setErrores({ login: mensaje });
+    } finally {
+        setCargando(false);
+    }
+};
 
-        // ==================================
-        // CREAR SESIÓN
-        // ==================================
-
-        /*
-            IMPORTANTE:
-
-            Ya no se arma un objeto a mano con
-            el sector enviado por la UI.
-
-            El Context solo acepta iniciar sesión
-            con un id válido, resolviendo los
-            permisos contra la lista canónica.
-        */
-
-        iniciarSesion(usuario.id);
-
-
-        // ==================================
-        // REDIRECCIÓN
-        // ==================================
-
-        // Después de iniciar sesión
-        // enviamos al administrador al dashboard.
-        navigate("/");
-    };
 
 
     // ======================================

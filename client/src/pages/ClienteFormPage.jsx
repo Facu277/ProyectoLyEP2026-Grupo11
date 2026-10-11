@@ -273,13 +273,8 @@ const ClienteFormPage = () => {
                     */
 
                     const actualizado =
-                        await clienteService
-                            .actualizarCliente(
-                                id,
-                                datosCliente,
-                                admin?.id
-                            );
-
+                        await clienteService.actualizarCliente(id, datosCliente);
+                    
 
                     console.log(
                         "CLIENTE ACTUALIZADO:"
@@ -304,12 +299,9 @@ const ClienteFormPage = () => {
                 } else {
 
                     const creado =
-                        await clienteService
-                            .crearCliente(
-                                datosCliente,
-                                admin?.id
-                            );
-
+                        await clienteService.crearCliente(
+                            datosCliente
+                        );
 
                     console.log(
                         "CLIENTE CREADO:"
@@ -330,13 +322,11 @@ const ClienteFormPage = () => {
                     */
 
                     if (admin) {
-
                         navigate(
                             "/clientes"
                         );
 
                     } else {
-
                         setRegistroExitoso(
                             true
                         );
@@ -351,7 +341,6 @@ const ClienteFormPage = () => {
                     vuelven al formulario para
                     mostrarse debajo del campo.
                 */
-
                 if (
                     error.validationErrors
                 ) {
@@ -359,23 +348,17 @@ const ClienteFormPage = () => {
                     throw error;
                 }
 
-
                 console.error(
                     "Error al guardar cliente:",
                     error
                 );
 
-
                 setMensajeError(
                     error.message || "No se pudo guardar el cliente."
                 );
-
-
                 throw error;
 
-
             } finally {
-
                 setCargando(false);
             }
         };
@@ -413,9 +396,7 @@ const ClienteFormPage = () => {
     // ======================================
 
     if (cargandoCliente) {
-
         return (
-
             <p>
                 Cargando cliente...
             </p>
@@ -431,11 +412,8 @@ const ClienteFormPage = () => {
         !esEdicion &&
         registroExitoso
     ) {
-
         return (
-
             <main>
-
                 <h1>
                     Registro completado
                 </h1>
@@ -443,11 +421,9 @@ const ClienteFormPage = () => {
                 <p>
                     El cliente fue creado correctamente.
                 </p>
-
             </main>
         );
     }
-
 
     // ======================================
     // CLIENTE NO ENCONTRADO
@@ -459,26 +435,19 @@ const ClienteFormPage = () => {
     ) {
 
         return (
-
             <main>
-
                 <h1>
                     Cliente no encontrado
                 </h1>
 
-
                 {mensajeError && (
-
                     <p className="mensaje-error">
                         {mensajeError}
                     </p>
                 )}
 
-
                 <button
-                    type="button"
-
-                    onClick={() =>
+                    type="button" onClick={() =>
                         navigate(
                             "/clientes"
                         )
@@ -486,7 +455,6 @@ const ClienteFormPage = () => {
                 >
                     Volver
                 </button>
-
             </main>
         );
     }
@@ -497,44 +465,23 @@ const ClienteFormPage = () => {
     // ======================================
 
     return (
-
         <main>
-
             <h1>
-
-                {
-                    esEdicion
-                        ? "Editar cliente"
-                        : "Crear cliente"
-                }
-
+                { esEdicion ? "Editar cliente" : "Crear cliente"}
             </h1>
 
-
             {mensajeError && (
-
                 <p className="mensaje-error">
                     {mensajeError}
                 </p>
             )}
 
-
             <FormularioCliente
 
-                cliente={
-                    cliente
-                }
-
-                onSubmit={
-                    guardarCliente
-                }
-
-                cargando={
-                    cargando
-                }
-
+                cliente={cliente}
+                onSubmit={guardarCliente}
+                cargando={cargando}
             />
-
         </main>
     );
 };

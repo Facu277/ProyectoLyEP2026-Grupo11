@@ -5,21 +5,10 @@ const RutaProtegida = ({
     children,
     rolesPermitidos = []
 }) => {
+    const { admin, tieneRol } = useAutorizaciones();
 
-    const {
-        admin,
-        tieneRol
-    } = useAutorizaciones();
-
-
-    // ==========================================
-    // VERIFICAR SESIÓN
-    // ==========================================
-
-    // Si no existe una sesión iniciada,
-    // redirigimos al login.
+    // Verificar si existe una sesión.
     if (!admin) {
-
         return (
             <Navigate
                 to="/login"
@@ -28,19 +17,11 @@ const RutaProtegida = ({
         );
     }
 
-
-    // ==========================================
-    // VERIFICAR ROL
-    // ==========================================
-
-    // Si la ruta exige determinados sectores
-    // y el administrador no pertenece a ellos,
-    // vuelve al dashboard.
+    // Verificar los roles permitidos.
     if (
         rolesPermitidos.length > 0 &&
         !tieneRol(rolesPermitidos)
     ) {
-
         return (
             <Navigate
                 to="/"
@@ -48,7 +29,6 @@ const RutaProtegida = ({
             />
         );
     }
-
 
     return children;
 };

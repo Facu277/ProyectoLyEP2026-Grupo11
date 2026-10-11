@@ -90,27 +90,12 @@ const ListaClientes = () => {
 
 
                 /*
-                    IMPORTANTE:
-
-                    Ya NO consultamos directamente
-                    FakeStoreAPI.
-
-                    clientesService obtiene los
-                    clientes almacenados en
-                    localStorage.
-
-                    FakeStoreAPI solamente se utiliza
-                    para la carga inicial.
+                    * Obtenemos los clientes desde el backend Express.
+                    * La API verifica el token y los permisos del administrador.
                 */
 
-                const lista =
-                    await clienteService
-                        .obtenerClientes();
-
-
-                setClientes(
-                    lista
-                );
+                const lista = await clienteService.obtenerClientes();
+                setClientes(lista);
 
 
             } catch (error) {
@@ -197,26 +182,17 @@ const ListaClientes = () => {
 
 
             try {
-
-                await clienteService
-                    .eliminarCliente(id, admin?.id);
-
-
+                await clienteService.eliminarCliente(id);
                 /*
                     Volvemos a cargar la lista para
                     reflejar inmediatamente el cambio.
                 */
-
                 await cargarClientes();
-
-
             } catch (error) {
-
                 console.error(
                     "Error al eliminar cliente:",
                     error
                 );
-
 
                 setError(
                     error.message || "No se pudo deshabilitar el cliente."
