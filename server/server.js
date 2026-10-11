@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors"); 
 const { connectDB } = require("./config/db");
 const clientesRouter = require("./routes/clientes.routes");
 const { errorHandler } = require("./middleware/errorHandler");
@@ -6,6 +7,8 @@ const { errorHandler } = require("./middleware/errorHandler");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// CORS 
+app.use(cors()); 
 app.use(express.json());
 
 // Router de clientes
