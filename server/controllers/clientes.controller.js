@@ -164,6 +164,7 @@ async function deleteCliente(req, res, next) {
   }
 }
 
+
 module.exports = {
   getClientes,
   getClienteById,
