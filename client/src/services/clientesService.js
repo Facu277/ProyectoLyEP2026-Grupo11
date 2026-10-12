@@ -67,7 +67,14 @@ export const obtenerClientes = async () => {
 export const obtenerClientePorId = async (id) => {
   try {
     const respuesta = await api.get(`/${id}`);
-    return respuesta.data;
+    
+    
+    const datos = respuesta.data;
+    if (datos?.data) {
+      return datos.data;
+    }
+    
+    return datos;
   } catch (error) {
     console.error(`Error al obtener el cliente con ID ${id}:`, error);
     throw error;
