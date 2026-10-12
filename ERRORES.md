@@ -49,4 +49,12 @@ Error 5: Se pueden crear clientes duplicados (mismo email y username)
 | 11 | `GET /api/clientes` con token válido devuelve 200 | OK | |
 | 12 | Los datos persisten después de reiniciar el servidor | OK | |
 | 13 | El documento aparece en MongoDB (Atlas/Compass) | OK | |
-
+| 14 | `GET /api/clientes/:id` existente devuelve 200 | OK | |
+| 15 | `GET /api/clientes/:id` inexistente devuelve 404 | OK | |
+| 16 | `GET /api/clientes/abc` (id inválido) no devuelve 500 | OK | |
+| 17 | `PATCH /api/clientes/:id` con un solo campo devuelve 200 y modifica el dato | OK | |
+| 18 | `PUT /api/clientes/:id` con body vacío devuelve 400 con detalles | OK | |
+| 19 | `GET /api/clientes` con header sin formato Bearer devuelve 401 | OK | |
+| 20 | `GET /api/clientes` con token falso devuelve 401 | OK | |
+| 21 | `POST /api/auth/login` sin body devuelve 400 | OK | |
+| 22 | `DELETE /api/clientes/:id` con GERENTE devuelve 200 | OK | | Tras el DELETE, el cliente queda con is_active=false (baja lógica)
