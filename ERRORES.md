@@ -58,3 +58,10 @@ Error 5: Se pueden crear clientes duplicados (mismo email y username)
 | 20 | `GET /api/clientes` con token falso devuelve 401 | OK | |
 | 21 | `POST /api/auth/login` sin body devuelve 400 | OK | |
 | 22 | `DELETE /api/clientes/:id` con GERENTE devuelve 200 | OK | | Tras el DELETE, el cliente queda con is_active=false (baja lógica)
+| 23 | `POST` con teléfono con letras y largo válido devuelve 400 | OK | Mensaje de error engañoso |
+| 24 | `POST` con email sin @ devuelve 400 | OK | |
+| 25 | `POST` con contraseña sin mayúscula devuelve 400 | OK | |
+| 26 | `POST` con contraseña con espacios devuelve 400 | OK | |
+| 27 | `POST` con número de calle fuera de rango (0) devuelve 400 | OK | |
+| 28 | `POST` con código postal vacío devuelve 400 | OK | |
+| 29 | `POST` con is_active no booleano devuelve 400 | OK | |
