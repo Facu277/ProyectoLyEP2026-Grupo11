@@ -22,7 +22,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      // Agregá aquí el dominio de Vercel cuando lo tengas.
+      "https://proyecto-ly-ep-2026-grupo11.vercel.app",
     ],
   })
 );
