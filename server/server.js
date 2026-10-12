@@ -4,12 +4,15 @@ const express = require("express");
 const cors = require("cors");
 
 const { connectDB } = require("./config/db");
+
+const {
+  inicializarAdministradores,
+} = require("./models/administrador.model");
+
 const clientesRouter = require("./routes/clientes.routes");
 const authRouter = require("./routes/auth.routes");
-const { errorHandler } = require("./middleware/errorHandler");
 
-// IMPORTANTE: verificá que esta ruta exista en tu proyecto.
-const { inicializarAdministradores } = require("./config/inicializarAdministradores");
+const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -47,10 +50,14 @@ async function iniciarServidor() {
     await inicializarAdministradores();
 
     app.listen(PORT, () => {
-      console.log(`Servidor ejecutándose en el puerto ${PORT}`);
+      console.log(`Servidor iniciado en el puerto ${PORT}`);
     });
   } catch (error) {
-    console.error("No se pudo iniciar el servidor:", error.message);
+    console.error(
+      "No se pudo iniciar el servidor:",
+      error.message
+    );
+
     process.exit(1);
   }
 }
