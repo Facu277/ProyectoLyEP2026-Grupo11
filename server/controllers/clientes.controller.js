@@ -101,9 +101,6 @@ async function updateCliente(req, res, next) {
     const idCliente = Number(id);
 
     const clienteExistente = await db.collection("clientes").findOne({ id: idCliente });
-    if (!clienteExistente) {
-      return res.status(404).json({ error: "Cliente no encontrado" });
-    }
 
     // Si modifican la contraseña se encripta, si no, se mantiene la actual
     if (datosActualizados.password && datosActualizados.password.trim() !== "") {
