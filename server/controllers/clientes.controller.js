@@ -19,17 +19,17 @@ async function getClientes(req, res, next) {
   }
 }
 
-// GET /api/clientes/:id -> Obtener cliente específico por ID (sin filtrar estrictamente por is_active en la URL)
+// GET /api/clientes/:id -> Obtener cliente específico por ID
 async function getClienteById(req, res, next) {
   try {
     const { id } = req.params;
     const db = await connectDB();
     
-    // Buscamos solo por ID numérico para garantizar que cargue al editar o ver detalles
+    // Forzamos la conversión a Número y buscamos el documento directamente
     const cliente = await db.collection("clientes").findOne({ id: Number(id) });
 
     if (!cliente) {
-      return res.status(404).json({ error: `No se encontró ningún cliente con el ID ${id}` });
+      return res.status(404).json({ error: `No se encontró el cliente con ID ${id}` });
     }
 
     res.status(200).json({
