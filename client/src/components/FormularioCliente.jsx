@@ -182,7 +182,8 @@ const FormularioCliente = ({
             street: formulario.address.street || "Sin especificar",
             number: Number(formulario.address.number) || 0,
             zipcode: formulario.address.zipcode || "0000"
-        }
+        },
+        is_active: true 
     };
 
     try {
