@@ -92,7 +92,7 @@ async function createCliente(req, res, next) {
   }
 }
 
-// PUT /api/clientes/:id -> Actualización total y mantenimiento de password
+// PUT /api/clientes/:id -> Actualización total (OMITIENDO password)
 async function updateCliente(req, res, next) {
   try {
     const { id } = req.params;
@@ -100,31 +100,39 @@ async function updateCliente(req, res, next) {
     const datosActualizados = req.body;
     const idCliente = Number(id);
 
+    // 1. Buscar si el cliente existe
     const clienteExistente = await db.collection("clientes").findOne({ id: idCliente });
-
-    // Si modifican la contraseña se encripta, si no, se mantiene la actual
-    if (datosActualizados.password && datosActualizados.password.trim() !== "") {
-      datosActualizados.password = await bcrypt.hash(datosActualizados.password, SALT_ROUNDS);
-    } else {
-      datosActualizados.password = clienteExistente.password;
+    
+    if (!clienteExistente) {
+      return res.status(404).json({ error: "Cliente no encontrado" });
     }
 
-    datosActualizados.id = idCliente;
-    datosActualizados.is_active = clienteExistente.is_active;
+    // 2. MANTENER LA CONTRASEÑA ACTUAL INALTERABLE (Ignoramos cualquier password que venga)
+    datosActualizados.password = clienteExistente.password;
 
+    // 3. Mantener ID y estado activo original
+    datosActualizados.id = idCliente;
+    datosActualizados.is_active = clienteExistente.is_active !== undefined ? clienteExistente.is_active : true;
+
+    // 4. Validar el documento con el modelo
     const documentoValidado = clienteToDocument(datosActualizados);
+
+    // 5. Reemplazar en MongoDB Atlas
     await db.collection("clientes").replaceOne({ id: idCliente }, documentoValidado);
+
+    // Ocultar password en la respuesta
+    const { password, ...respuestaSegura } = documentoValidado;
 
     res.status(200).json({
       mensaje: "Cliente actualizado correctamente",
-      data: documentoValidado
+      data: respuestaSegura
     });
   } catch (error) {
     next(error);
   }
 }
 
-// PATCH /api/clientes/:id -> Actualización parcial
+// PATCH /api/clientes/:id -> Actualización parcial (OMITIENDO password)
 async function patchCliente(req, res, next) {
   try {
     const { id } = req.params;
@@ -132,9 +140,9 @@ async function patchCliente(req, res, next) {
     const cambios = req.body;
     const idCliente = Number(id);
 
-    if (cambios.password) {
-      cambios.password = await bcrypt.hash(cambios.password, SALT_ROUNDS);
-    }
+    // Nos aseguramos de que no se intente modificar la contraseña por parche
+    delete cambios.password;
+    delete cambios.id;
 
     const resultado = await db.collection("clientes").updateOne(
       { id: idCliente },
@@ -176,7 +184,6 @@ async function deleteCliente(req, res, next) {
     next(error);
   }
 }
-
 
 module.exports = {
   getClientes,
