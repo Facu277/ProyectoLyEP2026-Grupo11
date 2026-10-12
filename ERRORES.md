@@ -22,7 +22,7 @@
 
 | 4 | `POST` con datos válidos devuelve 201 | OK | |
 
-Error 5: Se pueden crear clientes duplicados (mismo email y username)
+### Error 3: Se pueden crear clientes duplicados (mismo email y username)
 - **Estado:** CONFIRMADO
 - **Dónde:** `POST /api/clientes` (`server/controllers/clientes.controller.js`, `server/models/cliente.model.js`)
 - **Pasos para reproducir:**
@@ -35,7 +35,7 @@ Error 5: Se pueden crear clientes duplicados (mismo email y username)
 
 | 6 | login con contraseña incorrecta → 401 “Credenciales incorrectas." OK.
 
-### Error 7: Login sin JWT_SECRET devuelve error interno
+### Error 4: Login sin JWT_SECRET devuelve error interno
 - **Estado:** CONFIRMADO
 - **Dónde:** `server/controllers/auth.controller.js` (línea 58)
 - **Pasos para reproducir:** correr el server sin `JWT_SECRET` en el `.env` y hacer `POST /api/auth/login` con credenciales correctas.
@@ -65,3 +65,31 @@ Error 5: Se pueden crear clientes duplicados (mismo email y username)
 | 27 | `POST` con número de calle fuera de rango (0) devuelve 400 | OK | |
 | 28 | `POST` con código postal vacío devuelve 400 | OK | |
 | 29 | `POST` con is_active no booleano devuelve 400 | OK | |
+
+| 30 | El front arranca en `localhost:5173` sin errores en consola | OK | |
+### Error 5: URL del backend fija en dos servicios del frontend
+- **Estado:** CONFIRMADO
+- **Dónde:** `client/src/services/autorizacionesServices.js` (línea 4) y `client/src/services/estadisticasService.js` (línea 4)
+- **Pasos para reproducir:** `grep -rn "localhost:3001\|VITE_API_URL" client/src`
+- **Esperado:** las tres URLs del backend salen de la variable de entorno `VITE_API_URL`, como ya hace `clientesService.js`.
+- **Obtenido:** dos servicios usan `http://localhost:3001/api/auth` escrito a mano.
+- **Impacto:** con el frontend desplegado, el login y las estadísticas intentan conectarse a `localhost` y fallan, aunque el resto de las llamadas funcione.
+- **Solución propuesta:** usar `import.meta.env.VITE_API_URL || "http://localhost:3001/api"` y agregar `/auth` al final, en los dos archivos.
+
+| 31 | El front se comunica con el back sin error de CORS | OK | |
+| 32 | Login desde el front funciona con datos correctos e incorrectos | OK | |
+| 33 | Una ruta protegida sin sesión redirige al login | OK | |
+| 34 | Las rutas públicas (/login y /clientes/nuevo) cargan sin sesión | OK | |
+| 35 | Una ruta inexistente muestra la página de error | OK | |
+
+### Error 6: El servicio de clientes del frontend no envía el token de autenticación
+- **Estado:** CONFIRMADO
+- **Dónde:** `client/src/services/clientesService.js` (instancia de axios, líneas 7 a 12)
+- **Pasos para reproducir:**
+  1. Iniciar sesión en `http://localhost:5173/login` con un administrador GERENTE.
+  2. Entrar a `/clientes`.
+- **Esperado:** la lista muestra los clientes.
+- **Obtenido:** la pantalla indica un error al cargar la lista. En consola: `GET http://localhost:3001/api/clientes/ 401 (Unauthorized)`. Respuesta del back: `{"error":"No se proporcionó un token de autenticación."}`
+- **Causa:** la instancia de axios de `clientesService.js` solo configura `Content-Type` y no agrega el header `Authorization`. El token está guardado en `localStorage` bajo la clave `admin` (campo `token`) y `estadisticasService.js` sí lo usa correctamente.
+- **Impacto:** el administrador no puede ver, consultar, editar ni dar de baja clientes desde la interfaz. La API funciona con token (probado con Thunder Client).
+- **Posible solución:** agregar un interceptor de axios que lea `localStorage.getItem("admin")` y envíe `Authorization: Bearer <token>`, o replicar lo que hace `estadisticasService.js`.
