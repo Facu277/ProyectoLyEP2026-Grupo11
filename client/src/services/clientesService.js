@@ -1,134 +1,86 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3001/api/clientes";
-const STORAGE_KEY = "admin";
+// URL base del backend desde la variable de entorno de Vite
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
-// Recupera el token de la sesión iniciada.
-const obtenerConfigAutenticacion = () => {
-    const sesionGuardada = localStorage.getItem(STORAGE_KEY);
+// Configuración de la instancia de Axios
+const api = axios.create({
+  baseURL: `${API_URL}/clientes`,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-    if (!sesionGuardada) {
-        throw new Error("No hay una sesión iniciada.");
-    }
-
-    let sesion;
-
-    try {
-        sesion = JSON.parse(sesionGuardada);
-    } catch {
-        throw new Error("La sesión guardada no es válida.");
-    }
-
-    if (!sesion?.token) {
-        throw new Error("No se encontró el token de autenticación.");
-    }
-
-    return {
-        headers: {
-            Authorization: `Bearer ${sesion.token}`
-        }
-    };
+// ==========================================
+// READ: OBTENER TODOS LOS CLIENTES
+// ==========================================
+export const obtenerClientes = async () => {
+  try {
+    const respuesta = await api.get("/");
+    return respuesta.data;
+  } catch (error) {
+    console.error("Error al obtener clientes del backend:", error);
+    throw error;
+  }
 };
 
-// Conserva el mensaje y los detalles enviados por Express.
-const manejarError = (error) => {
-    const respuesta = error.response?.data;
-
-    const mensaje =
-        respuesta?.error ||
-        respuesta?.mensaje ||
-        error.message ||
-        "Ocurrió un error al comunicarse con el servidor.";
-
-    const errorServicio = new Error(mensaje);
-
-    errorServicio.status = error.response?.status;
-    errorServicio.validationErrors = respuesta?.detalles ?? [];
-    errorServicio.detalles = respuesta?.detalles ?? [];
-
-    throw errorServicio;
+// ==========================================
+// READ: OBTENER CLIENTE POR ID
+// ==========================================
+export const obtenerClientePorId = async (id) => {
+  try {
+    const respuesta = await api.get(`/${id}`);
+    return respuesta.data;
+  } catch (error) {
+    console.error(`Error al obtener el cliente con ID ${id}:`, error);
+    throw error;
+  }
 };
 
-// READ: obtener todos los clientes.
-// Requiere sesión de GERENTE o SOPORTE.
-const obtenerClientes = async () => {
-    try {
-        const respuesta = await axios.get(
-            API_URL,
-            obtenerConfigAutenticacion()
-        );
-
-        return respuesta.data.data;
-    } catch (error) {
-        manejarError(error);
-    }
+// ==========================================
+// CREATE: CREAR CLIENTE
+// ==========================================
+export const crearCliente = async (cliente) => {
+  try {
+    const respuesta = await api.post("/", cliente);
+    return respuesta.data;
+  } catch (error) {
+    console.error("Error al crear cliente:", error);
+    throw error.response?.data || error;
+  }
 };
 
-// READ: obtener un cliente por ID.
-// Requiere sesión de GERENTE o SOPORTE.
-const obtenerClientePorId = async (id) => {
-    try {
-        const respuesta = await axios.get(
-            `${API_URL}/${id}`,
-            obtenerConfigAutenticacion()
-        );
-
-        return respuesta.data.data;
-    } catch (error) {
-        manejarError(error);
-    }
+// ==========================================
+// UPDATE: ACTUALIZAR CLIENTE
+// ==========================================
+export const actualizarCliente = async (id, datosActualizados) => {
+  try {
+    const respuesta = await api.put(`/${id}`, datosActualizados);
+    return respuesta.data;
+  } catch (error) {
+    console.error(`Error al actualizar el cliente con ID ${id}:`, error);
+    throw error.response?.data || error;
+  }
 };
 
-// CREATE: registro público de un cliente.
-// No requiere token ni administrador.
-const crearCliente = async (cliente) => {
-    try {
-        const respuesta = await axios.post(
-            API_URL,
-            cliente
-        );
-
-        return respuesta.data.data;
-    } catch (error) {
-        manejarError(error);
-    }
+// ==========================================
+// DELETE: ELIMINAR O DESHABILITAR CLIENTE
+// ==========================================
+export const eliminarCliente = async (id) => {
+  try {
+    const respuesta = await api.delete(`/${id}`);
+    return respuesta.data;
+  } catch (error) {
+    console.error(`Error al eliminar el cliente con ID ${id}:`, error);
+    throw error.response?.data || error;
+  }
 };
 
-// UPDATE: actualizar un cliente.
-// Requiere sesión de GERENTE o SOPORTE.
-const actualizarCliente = async (id, datosActualizados) => {
-    try {
-        const respuesta = await axios.put(
-            `${API_URL}/${id}`,
-            datosActualizados,
-            obtenerConfigAutenticacion()
-        );
-
-        return respuesta.data.data;
-    } catch (error) {
-        manejarError(error);
-    }
-};
-
-// DELETE lógico: deshabilitar un cliente.
-// El backend debe permitirlo únicamente a GERENTE.
-const eliminarCliente = async (id) => {
-    try {
-        const respuesta = await axios.delete(
-            `${API_URL}/${id}`,
-            obtenerConfigAutenticacion()
-        );
-
-        return respuesta.data.data;
-    } catch (error) {
-        manejarError(error);
-    }
-};
-
+// Exportación por defecto manteniendo compatibilidad con la estructura anterior
 export default {
-    obtenerClientes,
-    obtenerClientePorId,
-    crearCliente,
-    actualizarCliente,
-    eliminarCliente
+  obtenerClientes,
+  obtenerClientePorId,
+  crearCliente,
+  actualizarCliente,
+  eliminarCliente,
 };

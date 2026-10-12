@@ -7,11 +7,35 @@ const clientesRouter = require("./routes/clientes.routes");
 const { errorHandler } = require("./middleware/errorHandler");
 
 
-// CORS 
-app.use(cors()); 
+app.use(cors({ origin: "http://localhost:5173" }));
+
 app.use(express.json());
 
-// Middlewares
+app.use("/api/clientes", clientesRouter);
+
+app.get("/", (req, res) => {
+  res.json({
+    mensaje: "Servidor ProyectoLyEP2026 funcionando",
+  });
+});
+
+
+app.use(errorHandler);
+
+
+dotenv.config();
+
+
+const app =
+  express();
+
+const PORT =
+  process.env.PORT || 3001;
+
+
+/**
+ * Middlewares
+ */
 app.use(
   cors({
     origin: [
