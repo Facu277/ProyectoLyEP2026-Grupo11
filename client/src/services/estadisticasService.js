@@ -18,7 +18,7 @@ const obtenerEstadisticas = async () => {
         }
 
         const respuesta = await axios.get(
-            `${API_URL}/estadisticas`,
+            `${API_URL}/auth/estadisticas`,
             {
                 headers: {
                     Authorization: `Bearer ${sesion.token}`

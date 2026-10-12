@@ -4,12 +4,28 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 // Configuración de la instancia de Axios
+
 const api = axios.create({
   baseURL: `${API_URL}/clientes`,
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+api.interceptors.request.use((config) => {
+  const sesionGuardada = localStorage.getItem("admin");
+
+  if (sesionGuardada) {
+    const sesion = JSON.parse(sesionGuardada);
+
+    if (sesion?.token) {
+      config.headers.Authorization = `Bearer ${sesion.token}`;
+    }
+  }
+
+  return config;
+});
+
 
 // ==========================================
 // READ: OBTENER TODOS LOS CLIENTES
