@@ -166,61 +166,32 @@ const FormularioCliente = ({
     // ======================================
 
     const handleSubmit = async (event) => {
+    event.preventDefault();
 
-        event.preventDefault();
-
-        // Preparamos los datos
-        const datosCliente = {
-            ...formulario,
-            address: {
-                ...formulario.address,
-                number: Number(formulario.address.number)
-            }
-        };
-
-        /*
-            IMPORTANTE:
-            En edición eliminamos password antes
-            de enviar los datos.
-
-            clientesService conservará la
-            contraseña existente.
-        */
-        if (esEdicion) {
-            delete datosCliente.password;
-        }
-
-        // ==================================
-
-        setErrores({});
-        setMensajeError("");
-
-        try {
-            // ClienteFormPage / servicio realiza la petición al backend.
-            await onSubmit(datosCliente);
-        } catch (error) {
-            // Los errores de validación deben venir del backend.
-            const respuesta = error?.response?.data;
-            const erroresBackend =
-                error?.validationErrors ??
-                respuesta?.errors ??
-                respuesta?.errores ??
-                respuesta?.data?.errors;
-
-            if (erroresBackend && typeof erroresBackend === "object") {
-                setErrores(erroresBackend);
-            }
-
-            setMensajeError(
-                respuesta?.mensaje ??
-                respuesta?.message ??
-                error?.message ??
-                "No se pudo guardar el cliente. Intentá nuevamente."
-            );
-
-            console.error("Error al guardar cliente:", error);
-        }
+    const datosCliente = {
+        email: formulario.email,
+        username: formulario.username,
+        password: formulario.password,
+        name: {
+            firstname: formulario.name.firstname,
+            lastname: formulario.name.lastname || "-"
+        },
+        phone: formulario.phone,
+        address: {
+            city: formulario.address.city,
+            street: formulario.address.street || "Sin especificar",
+            number: Number(formulario.address.number) || 0,
+            zipcode: formulario.address.zipcode || "0000"
+        },
+        is_active: true 
     };
+
+    try {
+        await onSubmit(datosCliente);
+    } catch (error) {
+        console.error("Error al guardar cliente:", error);
+    }
+};
 
     // REGLAS DE PASSWORD
     // ======================================

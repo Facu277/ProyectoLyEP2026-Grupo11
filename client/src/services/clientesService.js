@@ -4,6 +4,7 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 // Configuración de la instancia de Axios
+
 const api = axios.create({
   baseURL: `${API_URL}/clientes`,
   headers: {
@@ -11,18 +12,54 @@ const api = axios.create({
   },
 });
 
+api.interceptors.request.use((config) => {
+  const sesionGuardada = localStorage.getItem("admin");
+
+  if (sesionGuardada) {
+    const sesion = JSON.parse(sesionGuardada);
+
+    if (sesion?.token) {
+      config.headers.Authorization = `Bearer ${sesion.token}`;
+    }
+  }
+
+  return config;
+});
+
+
 // ==========================================
 // READ: OBTENER TODOS LOS CLIENTES
 // ==========================================
+
 export const obtenerClientes = async () => {
   try {
     const respuesta = await api.get("/");
-    return respuesta.data;
+    console.log("Respuesta completa de clientes:", respuesta);
+    console.log("Datos recibidos de clientes:", respuesta.data);
+
+    const datos = respuesta.data;
+
+    if (Array.isArray(datos)) {
+      return datos;
+    }
+
+    if (Array.isArray(datos?.data)) {
+      return datos.data;
+    }
+
+    if (Array.isArray(datos?.clientes)) {
+      return datos.clientes;
+    }
+
+    throw new Error(
+      "La API no devolvió una lista de clientes. Revisá la consola para ver la respuesta."
+    );
   } catch (error) {
-    console.error("Error al obtener clientes del backend:", error);
+    console.error("Error al obtener clientes:", error);
     throw error;
   }
 };
+
 
 // ==========================================
 // READ: OBTENER CLIENTE POR ID
