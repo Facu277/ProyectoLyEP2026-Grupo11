@@ -46,26 +46,42 @@ async function createCliente(req, res, next) {
     const db = await connectDB();
     const nuevoCliente = req.body;
 
-    // 1. Validar la estructura requerida del modelo de Flor
-    clienteToDocument(nuevoCliente);
+    // 1. Asignar valores por defecto que el formulario o el modelo exigen
+    nuevoCliente.is_active = true;
+    
+    // Si el formulario no manda apellido, completarlo por defecto
+    if (!nuevoCliente.name) nuevoCliente.name = {};
+    if (!nuevoCliente.name.lastname) nuevoCliente.name.lastname = "-";
 
-    // 2. Encriptar contraseña del Cliente
+    // Si faltan datos en la dirección, completarlos temporalmente para que el modelo no falle
+    if (!nuevoCliente.address) nuevoCliente.address = {};
+    if (!nuevoCliente.address.street) nuevoCliente.address.street = "Sin especificar";
+    if (nuevoCliente.address.number === undefined || nuevoCliente.address.number === "") {
+      nuevoCliente.address.number = 0;
+    } else {
+      nuevoCliente.address.number = Number(nuevoCliente.address.number);
+    }
+    if (!nuevoCliente.address.zipcode) nuevoCliente.address.zipcode = "0000";
+
+    // 2. Generar ID incremental dinámico
+    const ultimo = await db.collection("clientes").find().sort({ id: -1 }).limit(1).toArray();
+    nuevoCliente.id = ultimo.length > 0 ? ultimo[0].id + 1 : 1;
+
+    // 3. Encriptar contraseña del Cliente
     if (nuevoCliente.password) {
       nuevoCliente.password = await bcrypt.hash(nuevoCliente.password, SALT_ROUNDS);
     } else {
       return res.status(400).json({ error: "La contraseña es obligatoria" });
     }
 
-    // 3. Generar ID incremental dinámico consultando la DB
-    const ultimo = await db.collection("clientes").find().sort({ id: -1 }).limit(1).toArray();
-    nuevoCliente.id = ultimo.length > 0 ? ultimo[0].id + 1 : 1;
-    nuevoCliente.is_active = true;
+    // 4. AHORA SÍ: Validar la estructura completa con el modelo
+    const documentoValidado = clienteToDocument(nuevoCliente);
 
-    // 4. Guardar en MongoDB Atlas
-    await db.collection("clientes").insertOne(nuevoCliente);
+    // 5. Guardar en MongoDB Atlas
+    await db.collection("clientes").insertOne(documentoValidado);
 
-    // Ocultar password en la respuesta por seguridad corporativa
-    const { password, ...respuestaSegura } = nuevoCliente;
+    // Ocultar password en la respuesta por seguridad
+    const { password, ...respuestaSegura } = documentoValidado;
 
     res.status(201).json({
       mensaje: "Cliente creado exitosamente en MongoDB Atlas",
