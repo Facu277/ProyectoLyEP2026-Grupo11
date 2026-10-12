@@ -43,5 +43,10 @@ Error 5: Se pueden crear clientes duplicados (mismo email y username)
 - **Obtenido:** el login pasa la verificación de la contraseña y falla al firmar con `Error: JWT_SECRET no está configurado.` (respuesta [completar código, probablemente 500]).
 - **Solución:** definir `JWT_SECRET` en `server/.env` (documentado en el README y `.env.example`). Mejora sugerida: validar las variables obligatorias al arrancar.
 
-| 20 | `POST /api/auth/login` con credenciales correctas devuelve 200 con token | OK | |
-| 21 | `POST /api/auth/login` con contraseña incorrecta devuelve 401 | OK | |
+| 8 | `POST /api/auth/login` con credenciales correctas devuelve 200 con token | OK | |
+| 9 | `POST /api/auth/login` con contraseña incorrecta devuelve 401 | OK | |
+| 10 | `GET /api/clientes` sin token devuelve 401 | OK | |
+| 11 | `GET /api/clientes` con token válido devuelve 200 | OK | |
+| 12 | Los datos persisten después de reiniciar el servidor | OK | |
+| 13 | El documento aparece en MongoDB (Atlas/Compass) | OK | |
+
