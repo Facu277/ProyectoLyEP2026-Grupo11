@@ -1,7 +1,9 @@
 
+
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+const API_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 const obtenerEstadisticas = async () => {
     try {
@@ -26,7 +28,15 @@ const obtenerEstadisticas = async () => {
             }
         );
 
-        return respuesta.data.data;
+        const datos = respuesta.data?.data;
+
+        if (!datos || typeof datos !== "object") {
+            throw new Error(
+                "El servidor devolvió una respuesta de estadísticas inesperada."
+            );
+        }
+
+        return datos;
     } catch (error) {
         const mensaje =
             error.response?.data?.error ||

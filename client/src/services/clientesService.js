@@ -30,15 +30,36 @@ api.interceptors.request.use((config) => {
 // ==========================================
 // READ: OBTENER TODOS LOS CLIENTES
 // ==========================================
+
 export const obtenerClientes = async () => {
   try {
     const respuesta = await api.get("/");
-    return respuesta.data;
+    console.log("Respuesta completa de clientes:", respuesta);
+    console.log("Datos recibidos de clientes:", respuesta.data);
+
+    const datos = respuesta.data;
+
+    if (Array.isArray(datos)) {
+      return datos;
+    }
+
+    if (Array.isArray(datos?.data)) {
+      return datos.data;
+    }
+
+    if (Array.isArray(datos?.clientes)) {
+      return datos.clientes;
+    }
+
+    throw new Error(
+      "La API no devolvió una lista de clientes. Revisá la consola para ver la respuesta."
+    );
   } catch (error) {
-    console.error("Error al obtener clientes del backend:", error);
+    console.error("Error al obtener clientes:", error);
     throw error;
   }
 };
+
 
 // ==========================================
 // READ: OBTENER CLIENTE POR ID
