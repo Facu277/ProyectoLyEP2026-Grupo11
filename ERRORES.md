@@ -89,7 +89,27 @@
   1. Iniciar sesión en `http://localhost:5173/login` con un administrador GERENTE.
   2. Entrar a `/clientes`.
 - **Esperado:** la lista muestra los clientes.
-- **Obtenido:** la pantalla indica un error al cargar la lista. En consola: `GET http://localhost:3001/api/clientes/ 401 (Unauthorized)`. Respuesta del back: `{"error":"No se proporcionó un token de autenticación."}`
-- **Causa:** la instancia de axios de `clientesService.js` solo configura `Content-Type` y no agrega el header `Authorization`. El token está guardado en `localStorage` bajo la clave `admin` (campo `token`) y `estadisticasService.js` sí lo usa correctamente.
+- **Obtenido:** la pantalla indica un error al cargar la lista. En consola: `GET http://localhost:3001/api/clientes/ 401 (Unauthorized)`. Respuesta del back en Network: `{"error":"No se proporcionó un token de autenticación."}`
+- **Causa:** la instancia de axios de `clientesService.js` solo configura `Content-Type` y no agrega el header `Authorization`. La sesión se guarda en `localStorage` bajo la clave `admin` y `estadisticasService.js` sí envía el token con ese patrón.
 - **Impacto:** el administrador no puede ver, consultar, editar ni dar de baja clientes desde la interfaz. La API funciona con token (probado con Thunder Client).
-- **Posible solución:** agregar un interceptor de axios que lea `localStorage.getItem("admin")` y envíe `Authorization: Bearer <token>`, o replicar lo que hace `estadisticasService.js`.
+- **Posible solución:** agregar un interceptor de axios en `clientesService.js` que lea la sesión de `localStorage` y envíe `Authorization: Bearer <token>`.
+
+| 36 | La lista de clientes del front muestra datos reales | FALLA | Ver Error 6 |
+| 37 | El detalle de un cliente muestra sus datos | FALLA | Bloqueado por Error 6 |
+
+### Error 7: Alta de cliente sin is_active devuelve error interno (también desde el formulario)
+- **Estado:** CONFIRMADO (reproducido por API y por interfaz)
+- **Dónde:** `server/models/cliente.model.js` (línea 40), `server/middleware/validateCliente.js` y formulario `/clientes/nuevo` del frontend
+- **Pasos para reproducir:**
+  1. Abrir `http://localhost:5173/clientes/nuevo`.
+  2. Completar el formulario con datos válidos (contraseña con símbolo, teléfono de 7 a 15 dígitos).
+  3. Enviar. (También se reproduce con `POST /api/clientes` sin el campo `is_active`.)
+- **Esperado:** 201 y el cliente creado, con `is_active` en un valor por defecto.
+- **Obtenido:** el `POST` devuelve 500 ("error interno del servidor"). En la terminal del server: `Error: is_active debe ser booleano` en `validarCliente` (cliente.model.js:40), llamado desde `clienteToDocument` (cliente.model.js:53) y `createCliente` (clientes.controller.js:50).
+- **Causa:** el formulario del frontend no envía `is_active` (verificado en Network → Payload del `POST`; en `ClienteFormPage.jsx` solo aparece en una comparación, línea 177). El middleware lo trata como opcional y `clienteToDocument` lo exige como booleano.
+- **Impacto:** el registro público de clientes no funciona desde la interfaz.
+- **Posible solución:** que `clienteToDocument` asigne `true` por defecto cuando `is_active` es `undefined`, o que el formulario lo envíe.
+| 38 | Alta de cliente desde el formulario público devuelve 201 | FALLA | Ver Error 7 |
+| 39 | El formulario muestra el error de validación con datos inválidos | OK | |
+| 40 | El formulario muestra el error de validación con datos inválidos | OK | |
+| 41 | Con el back apagado, el front muestra un mensaje de error | OK | Muestra "Network Error" (mensaje técnico de axios, no amigable) |
