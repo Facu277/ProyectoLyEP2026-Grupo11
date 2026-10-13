@@ -113,3 +113,13 @@
 | 39 | El formulario muestra el error de validación con datos inválidos | OK | |
 | 40 | El formulario muestra el error de validación con datos inválidos | OK | |
 | 41 | Con el back apagado, el front muestra un mensaje de error | OK | Muestra "Network Error" (mensaje técnico de axios, no amigable) |
+
+### Error 8: Datos de administradores (con contraseña) dentro del código del frontend
+- **Estado:** CONFIRMADO
+- **Dónde:** `client/src/services/administradoresInicializados.js`
+- **Pasos para reproducir:** `grep -n "password" client/src/services/administradoresInicializados.js`
+- **Esperado:** el código del cliente no contiene credenciales; los administradores iniciales solo se crean en el backend (`inicializarAdministradores`).
+- **Obtenido:** el archivo tiene 5 apariciones de `password` con [hashes bcrypt / contraseñas en texto plano: completar].
+- **Impacto:** todo lo que está en `client/src` viaja al navegador de cualquiera que abra el sitio, y más aún tras el deploy.
+- **Solución propuesta:** eliminar el archivo y sus usos en el frontend; si hace falta, mover los datos iniciales al backend.
+
