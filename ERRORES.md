@@ -123,3 +123,4 @@
 - **Impacto:** todo lo que está en `client/src` viaja al navegador de cualquiera que abra el sitio, y más aún tras el deploy.
 - **Solución propuesta:** eliminar el archivo y sus usos en el frontend; si hace falta, mover los datos iniciales al backend.
 
+| 42 | Tests automáticos del middleware validarDatosCliente (Jest) | OK | N tests pasando (`npm test` en `server/`) |

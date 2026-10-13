@@ -354,5 +354,13 @@ La utilización de IA como herramienta de asistencia no implica que las pruebas 
 
 El código propuesto con asistencia de IA fue utilizado como apoyo al proceso de desarrollo, bajo la responsabilidad del equipo, que debe revisar su adecuación a los requerimientos y al funcionamiento esperado del sistema.
 
+Pruebas:
+
+  - Guía para levantar el proyecto en local y depurar errores de entorno (conexión a MongoDB Atlas, variables de entorno, dependencias).
+  - Ayuda con Git (merge, resolución de conflictos, ramas y commits).
+  - Plantilla del registro de pruebas (`docs/ERRORES.md`) y borrador inicial del README.
+  - Redacción de los tests de Jest del middleware `validarDatosCliente`.
+  - Evaluación: ejecuté personalmente cada prueba (Thunder Client y navegador), verifiqué los resultados contra el comportamiento real del sistema, corrí `npm test` hasta que pasaron todos los tests y revisé el contenido antes de commitear. Los errores documentados salen de pruebas propias, no de suposiciones.
+
 ------------------------------------------------------------------------
 
