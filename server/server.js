@@ -1,24 +1,25 @@
 require("dotenv").config();
 
 const express = require("express");
-const cors = require("cors"); 
+const cors = require("cors");
+
 const { connectDB } = require("./config/db");
+const authRouter = require("./routes/auth.routes");
 const clientesRouter = require("./routes/clientes.routes");
 const { errorHandler } = require("./middleware/errorHandler");
+const { inicializarAdministradores } = require("./models/administrador.model");
 
 
-app.use(cors({ origin: "http://localhost:5173" }));
 
+app.use(cors({ origin: ["http://localhost:5173"] }));
 app.use(express.json());
 
-app.use("/api/clientes", clientesRouter);
-
 app.get("/", (req, res) => {
-  res.json({
-    mensaje: "Servidor ProyectoLyEP2026 funcionando",
-  });
+  res.json({ mensaje: "Servidor ProyectoLyEP2026 funcionando" });
 });
 
+app.use("/api/auth", authRouter);
+app.use("/api/clientes", clientesRouter);
 
 app.use(errorHandler);
 
@@ -40,7 +41,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      // Agregá aquí el dominio de Vercel cuando despliegues el frontend.
+      
     ],
   })
 );
