@@ -9,8 +9,7 @@ const clientesRouter = require("./routes/clientes.routes");
 const { errorHandler } = require("./middleware/errorHandler");
 const { inicializarAdministradores } = require("./models/administrador.model");
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+
 
 app.use(cors({ origin: ["http://localhost:5173"] }));
 app.use(express.json());
@@ -24,13 +23,53 @@ app.use("/api/clientes", clientesRouter);
 
 app.use(errorHandler);
 
+
+dotenv.config();
+
+
+const app =
+  express();
+
+const PORT =
+  process.env.PORT || 3001;
+
+
+/**
+ * Middlewares
+ */
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      
+    ],
+  })
+);
+
+app.use(express.json());
+
+// Ruta principal
+app.get("/", (req, res) => {
+  res.json({
+    mensaje: "Servidor ProyectoLyEP2026 funcionando",
+  });
+});
+
+// Rutas
+app.use("/api/auth", authRouter);
+app.use("/api/clientes", clientesRouter);
+
+// Manejo de errores
+app.use(errorHandler);
+
+// Iniciar servidor
 async function iniciarServidor() {
   try {
     await connectDB();
     await inicializarAdministradores();
 
     app.listen(PORT, () => {
-      console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
+      console.log(`Servidor ejecutándose en el puerto ${PORT}`);
     });
   } catch (error) {
     console.error("No se pudo iniciar el servidor:", error.message);
